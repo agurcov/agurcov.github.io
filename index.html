@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>МОЯ НЕЙРО-МУЗЫКА — творческое музыкальное портфолио автора Agurcov</title>
+    <!-- Библиотека jsmediatags для чтения обложек из MP3 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+    <style>
+        :root {
+            --bg-main: #121212;
+            --bg-card: #1e1e1e;
+            --bg-hover: #292929;
+            --accent-purple: #bb86fc;
+            --accent-cyan: #03dac6;
+            --text-main: #e0e0e0;
+            --text-muted: #9e9e9e;
+            --border-color: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 30px 15px 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 1.9rem;
+            color: var(--accent-purple);
+            letter-spacing: 0.5px;
+        }
+
+        .brand p {
+            margin: 5px 0 0;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .badge-status {
+            background: rgba(3, 218, 198, 0.12);
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .badge-status.error {
+            background: rgba(255, 82, 82, 0.15);
+            color: #ff5252;
+            border-color: #ff5252;
+        }
+
+        .btn-local-files {
+            background: #2b2b2b;
+            color: var(--text-main);
+            border: 1px solid #444;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-local-files:hover {
+            border-color: var(--accent-purple);
+            background: #383838;
+        }
+
+        /* Панель плеера */
+        .player-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .player-main-area {
+            display: grid;
+            grid-template-columns: 1fr 1.45fr;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .player-main-area {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .player-left-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        /* Увеличенное окно обложки трека */
+        .cover-art-box {
+            width: 140px;
+            height: 140px;
+            background: #161616;
+            border: 1px solid #333;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            position: relative;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+
+        .cover-art-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .cover-placeholder {
+            padding: 8px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            line-height: 1.3;
+            font-weight: 500;
+            user-select: none;
+        }
+
+        .cover-placeholder span {
+            font-size: 1.8rem;
+            display: block;
+            margin-bottom: 6px;
+            color: var(--accent-purple);
+        }
+
+        .player-info-right {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .now-playing-info h2 {
+            margin: 0 0 6px 0;
+            font-size: 1.55rem;
+            color: #ffffff;
+        }
+
+        .tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: #2c2c2c;
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        /* Правая часть */
+        .player-right-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* Широкий спектроанализатор с неподвижной шкалой частот */
+        .visualizer-container {
+            background: #161616;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 12px 14px;
+            height: 140px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .visualizer {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 92px;
+            gap: 3px;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(to top, #ffe600, #ff8800, #cc0000, #660000);
+            border-radius: 2px;
+            transition: height 0.06s ease;
+            min-height: 6px;
+        }
+
+        .freq-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            border-top: 1px solid #282828;
+            padding-top: 5px;
+            font-variant-numeric: tabular-nums;
+            width: 100%;
+        }
+
+        /* Окно эквалайзера с кнопкой сброса */
+        .eq-box {
+            background: #161616;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 8px 6px;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .eq-sliders-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex: 1;
+        }
+
+        .eq-slider-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100%;
+            background: #1c1c1c;
+            border: 1px solid #282828;
+            border-radius: 6px;
+            padding: 5px 3px;
+        }
+
+        .eq-slider-col span {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            line-height: 1;
+            font-weight: 600;
+        }
+
+        .vertical-range {
+            writing-mode: bt-lr;
+            -webkit-appearance: slider-vertical;
+            width: 14px;
+            height: 60px;
+            accent-color: var(--accent-purple);
+            cursor: pointer;
+        }
+
+        .btn-reset-eq {
+            background: #2b2b2b;
+            color: var(--text-muted);
+            border: 1px solid #3d3d3d;
+            font-size: 0.65rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn-reset-eq:hover {
+            background: var(--accent-purple);
+            color: #000;
+            border-color: var(--accent-purple);
+        }
+
+        /* Кнопки и горизонтальный ползунок времени */
+        .controls-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            border-top: 1px solid #2a2a2a;
+            padding-top: 18px;
+        }
+
+        .btn-ctrl {
+            background: #2b2b2b;
+            color: var(--text-main);
+            border: 1px solid #3d3d3d;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-ctrl:hover {
+            background: #383838;
+            border-color: var(--accent-purple);
+        }
+
+        .btn-play {
+            background: var(--accent-cyan);
+            color: #000;
+            width: 52px;
+            height: 52px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+        }
+
+        .btn-play:hover {
+            background: #00f5df;
+            transform: scale(1.04);
+        }
+
+        .progress-wrap {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .time-label {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+            min-width: 38px;
+        }
+
+        input[type="range"]:not(.vertical-range) {
+            flex: 1;
+            accent-color: var(--accent-purple);
+            cursor: pointer;
+            height: 5px;
+        }
+
+        /* Сетка: Плейлист + Текст песни */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.35fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 800px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            margin: 0 0 15px 0;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #2b2b2b;
+            padding-bottom: 10px;
+        }
+
+        /* Список треков */
+        .tracklist {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .track-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: #171717;
+            border: 1px solid #272727;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .track-item:hover {
+            background: var(--bg-hover);
+            border-color: #444;
+        }
+
+        .track-item.active {
+            background: rgba(187, 134, 252, 0.12);
+            border-color: var(--accent-purple);
+        }
+
+        .track-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .track-num {
+            color: var(--text-muted);
+            font-weight: bold;
+            width: 22px;
+            font-size: 0.9rem;
+        }
+
+        .track-item.active .track-num {
+            color: var(--accent-cyan);
+        }
+
+        .track-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #fff;
+            margin-bottom: 3px;
+        }
+
+        .track-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .track-bpm {
+            font-size: 0.78rem;
+            color: var(--accent-cyan);
+            background: #242424;
+            padding: 4px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        /* Блок текста песни */
+        .lyrics-box {
+            background: #161616;
+            border: 1px solid #262626;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 460px;
+            overflow-y: auto;
+            line-height: 1.7;
+            font-size: 0.96rem;
+            color: #8c8c8c;
+            scroll-behavior: smooth;
+        }
+
+        .lyric-line {
+            margin: 4px 0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .lyric-line.section-header {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            margin-top: 14px;
+            margin-bottom: 6px;
+        }
+
+        .lyric-line.active {
+            color: #ffffff;
+            background: rgba(187, 134, 252, 0.18);
+            border-left: 3px solid var(--accent-purple);
+            padding-left: 10px;
+            font-weight: 600;
+        }
+
+        .lyrics-box::-webkit-scrollbar {
+            width: 8px;
+        }
+        .lyrics-box::-webkit-scrollbar-thumb {
+            background: #383838;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="brand">
+            <h1>МОЯ НЕЙРО-МУЗЫКА</h1>
+            <p>творческое музыкальное портфолио автора Agurcov</p>
+        </div>
+        <div class="header-actions">
+            <label class="btn-local-files" title="Выберите свои MP3-файлы, если открываете сайт локально">
+                📂 Выбрать MP3 файлы
+                <input type="file" id="localFileInput" multiple accept="audio/*" style="display: none;">
+            </label>
+            <div class="badge-status" id="audioModeBadge">Готов к воспроизведению</div>
+        </div>
+    </header>
+
+    <!-- Плеер -->
+    <div class="player-card">
+        <div class="player-main-area">
+            <div class="player-left-group">
+                <!-- Увеличенное окно обложки трека -->
+                <div class="cover-art-box" id="coverArtContainer">
+                    <div class="cover-placeholder">
+                        <span>💿</span>
+                        Обложка трека
+                    </div>
+                </div>
+
+                <div class="player-info-right">
+                    <div class="now-playing-info">
+                        <h2 id="currentTitle">Земля, ответь!</h2>
+                        <div class="tags">
+                            <span class="tag" id="currentGenre">Progressive house</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Правая часть: Спектроанализатор + Эквалайзер с кнопкой сброса -->
+            <div class="player-right-controls">
+                <div class="visualizer-container">
+                    <div class="visualizer" id="visualizer"></div>
+                    <div class="freq-labels">
+                        <span>50Hz</span>
+                        <span>150Hz</span>
+                        <span>400Hz</span>
+                        <span>1kHz</span>
+                        <span>2.5kHz</span>
+                        <span>4kHz</span>
+                    </div>
+                </div>
+
+                <div class="eq-box" title="Эквалайзер и Громкость">
+                    <div class="eq-sliders-row">
+                        <div class="eq-slider-col">
+                            <span>VOL</span>
+                            <input type="range" class="vertical-range" id="volumeBar" value="85" min="0" max="100">
+                            <span>🔊</span>
+                        </div>
+                        <div class="eq-slider-col">
+                            <span>BASS</span>
+                            <input type="range" class="vertical-range" id="bassBar" value="0" min="-20" max="20" step="1">
+                            <span>低</span>
+                        </div>
+                        <div class="eq-slider-col">
+                            <span>MID</span>
+                            <input type="range" class="vertical-range" id="midBar" value="0" min="-20" max="20" step="1">
+                            <span>中</span>
+                        </div>
+                        <div class="eq-slider-col">
+                            <span>TREB</span>
+                            <input type="range" class="vertical-range" id="trebleBar" value="0" min="-20" max="20" step="1">
+                            <span>高</span>
+                        </div>
+                    </div>
+                    <button class="btn-reset-eq" id="resetEqBtn" title="Сбросить эквалайзер в ноль">Сброс EQ</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-row">
+            <button class="btn-ctrl" id="prevBtn" title="Предыдущий трек">&#9664;&#9664;</button>
+            <button class="btn-ctrl btn-play" id="playBtn" title="Воспроизвести / Пауза">&#9654;</button>
+            <button class="btn-ctrl" id="nextBtn" title="Следующий трек">&#9654;&#9654;</button>
+
+            <div class="progress-wrap">
+                <span class="time-label" id="currentTime">00:00</span>
+                <input type="range" id="seekBar" value="0" min="0" max="100" step="0.1">
+                <span class="time-label" id="totalTime">--:--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Плейлист и Текст песни -->
+    <div class="main-grid">
+        <div class="panel">
+            <h3 class="panel-title">Треклист (5)</h3>
+            <div class="tracklist" id="tracklist"></div>
+        </div>
+
+        <div class="panel">
+            <h3 class="panel-title">Текст песни</h3>
+            <div class="lyrics-box" id="lyricsBox"></div>
+        </div>
+    </div>
+</div>
+
+<audio id="audioElement" crossorigin="anonymous" preload="metadata"></audio>
+
+<script>
+    // Все 5 песен из вашего файла, пути к mp3 настроены на корень репозитория
+    const tracks = [
+        {
+            title: "Земля, ответь!",
+            genre: "Progressive house",
+            bpm: 128,
+            baseName: "zemlya_otvet",
+            audioSrc: "zemlya_otvet.mp3",
+            lyrics: `[Verse 1]
+Доставка VIP. На навигаторе Земля
+Особо важный груз в отсеках корабля
+Курьер доставщик – Робот экспедитор
+Почтовый шаттл выводит на орбиту
+
+Буст Пак настроен. Гравитация растёт
+В активной фазе бортовой автопилот
+ТелеметрИя мониторит общий фон
+Система связи отправляет в микрофон
+
+[Chorus]
+Земля, Земля! Приём, я Альфа-Браво!
+Гигантская комета слева, астероид справа.
+Лечу на Землю, с важным грузом на борту!
+Вошел воколо зЕмный слой, теряю высоту.
+
+Земля, Земля, приём … (приём)
+Земля, Земля, приём, приём (приём)
+Радиосеть молчит, приём… (приём)
+Земля, ответь! Приём... (приём)
+
+[Verse 2]
+Вход в атмосферу, тепловой поток.
+Горит огнём, космический челнок.
+Резервные системы на пределе,
+Особо ценный груз почти у цели.
+
+Земля. Толчёк. Задержка. Торможенье.
+Радар сигналит. Опасное сближенье.
+Посадка. Отблески огня на капонире.
+И крики, обречённые в эфире:
+
+[Chorus]
+Земля, Земля! Приём, я Альфа-Браво!
+Земля, приём! Корабль тащит вправо!
+Земля, приём, приём! Стыковки нет!
+В дыму невидно, космодрома силуэт!
+
+Земля, Земля, приём … (приём)
+Земля, Земля, приём, приём (приём)
+Радиосеть молчит, приём… (приём)
+Земля, ответь! Приём... (приём)
+
+[Final]
+Delivery Error…(error)
+Цель не достигнута. Ошибка.`
+        },
+        {
+            title: "[̲̅O] [̲̅∆] [̲̅И] [̲̅H]",
+            genre: "Slowcore",
+            bpm: 58,
+            baseName: "odin",
+            audioSrc: "odin.mp3",
+            lyrics: `[Verse 1]
+Уже довольно долгий срок,
+Я совершенно одинок,
+Проходит день, за ним другой,
+Никто не хочет жить со мной.
+
+Никто со мной не говорит,
+По телефону не звонит,
+Мне даже некого спросить,
+Как это можно объяснить.
+
+Никто руки мне не подаст,
+Не защитит и не предаст,
+Никто меня не позовёт,
+Когда исчезну, не найдёт.
+
+[Chorus]
+Ведь я один, совсем один…
+Я абсолютно нелюдим…
+Остался я совсем один…
+Себе я раб, и господин…
+
+Ведь я один … Совсем один…
+
+[Verse 2]
+Никто со мной не устаёт,
+По пустякам не пристаёт,
+Никто без дела не орёт.
+Не обвиняет и не врёт.
+
+Никто меня не признаёт,
+Никто на встречу не идёт,
+Мне даже некого любить,
+И не с кем искренне дружить.
+
+Меня никто не подведёт,
+Не удалит, и не вернёт,
+Не надо мне переживать,
+И за кого-то отвечать.
+
+[Chorus]
+Ведь я один, совсем один…
+Я абсолютно нелюдим…
+Остался я совсем один…
+Себе я раб, и господин…
+
+Ведь я один … Совсем один…
+
+[Verse 3]
+Никто меня не удивит,
+Никто в лицо не оскорбит,
+Мне даже некому соврать,
+И правду некому сказать.
+
+Никто не спросит: «Как дела?»
+Никто не скажет: «Я ушла!»
+Мне даже некуда спешить,
+И некого поторопить.
+
+Никто не вспомнит обо мне,
+Никто не явится во сне.
+Мне даже некого простить,
+Ни наказать, не отомстить.
+
+[Bridge]
+Я сам себе и друг, и враг,
+Я сам себе и свет, и мрак.
+Мне даже некому сказать,
+Как я устал её искать.
+
+[Outro]
+Ведь я один ... Совсем один…
+Я совершенно нелюдим… Совсем один …
+Остался я совсем один…
+(Совсем один ...)`
+        },
+        {
+            title: "England Is Good!",
+            genre: "Deep ghetto house",
+            bpm: 128,
+            baseName: "england_is_good",
+            audioSrc: "england_is_good.mp3",
+            lyrics: `[Intro] 
+I want my money and my free house
+And English woman it's my dream
+If everyone can have that we want it
+You can't get that anywhere else
+England is good!
+
+[Verse 1]
+I want my money, I need that free house,
+I’m burning with desire; this fire can’t be douse.
+English woman — that’s the dream I hold tight,
+I really want to fuck her, because it’s white.
+
+[Pre‑Drop]
+Yeah… I want it all…
+Right now…
+No compromise…
+
+[Drop 1]
+Money! House! Dream!
+Money! House! Dream!
+England is good — we’re taking it all!
+Money! House! Dream!
+
+[Verse 2]
+They say it’s impossible, they say it’s too much,
+But I lounged around all night and the rush.
+If everyone can have it, then we want it too,
+No holding back, no second-guessing the move.
+
+[Skit]
+England’s the spot where we make it our own.
+
+[Bridge]
+We’re not asking permission, we’re not bound,
+Breaking the walls down, turning the ground around.
+
+[Drop 2]
+Want it! Need it! Take it!
+Want it! Need it! Take it!
+England is good — no other way!
+Want it! Need it! Take it!
+
+[Outro]
+Yeah… England is good!
+We have needs; we want to survive.
+Money, house, dream — that’s alive!`
+        },
+        {
+            title: "Усталость ...",
+            genre: "Trip-hop downtempo",
+            bpm: 72,
+            baseName: "ustalost",
+            audioSrc: "ustalost.mp3",
+            lyrics: `[Verse 1]
+Ветер гонит пепел на восток,
+Ищет души в тлеющей золе,
+Там, где бой тяжёлый не умолк,
+Я стою на выжженной земле.
+
+Не могу оружие поднять,
+Не достать из-за спины мне меч.
+Не хочу я больше воевать!
+Как мне скинуть этот камень с плеч?
+
+[Chorus]
+Не хочу я больше воевать!
+Я давно устал от этих битв!
+Никого не буду убивать,
+Как же это всё остановить?
+
+[Verse 2]
+Догорают кости мертвецов,
+Исчезая прямо на глазах,
+Не осталось злости на врагов,
+Только соль на треснувших губах.
+
+Я не стану спину надрывать,
+Бешено бросаясь на врага,
+Не хочу я больше воевать!
+Уберу оружие пока.
+
+[Chorus]
+Не хочу я больше воевать!
+Я давно устал от этих битв!
+Никого не буду убивать,
+Надо эту драку прекратить.
+
+[Verse 3]
+Пепел разлетаясь по полям,
+Искрами трещит в моих ушах,
+На войне все молятся Богам,
+Утопая, в праведных грехах.
+
+Стихло всё, угрозы больше нет,
+И не надо снова начинать,
+Не бывает здесь простых побед,
+Надо примирение искать.
+
+[Chorus]
+Не хочу я больше воевать!
+Я давно устал от этих войн!
+Никого не буду убивать,
+Отправляюсь молча я домой.
+(Никого не буду убивать,
+Ухожу я, тихо на покой).
+
+[Outro]
+Никого не буду убивать,
+Отправляюсь молча я домой.
+(Ухожу я, тихо на покой).`
+        },
+        {
+            title: "Good News",
+            genre: "blues-rock, soul",
+            bpm: 96,
+            baseName: "good_news",
+            audioSrc: "good_news.mp3",
+            lyrics: `[Verse 1]
+My phone's been silent for a couple days now,
+Every second's a weight that's dragging me down somehow.
+But I'm holding on, searching for a sign,
+A line that'll turn this grey into something that'll shine.
+
+[Pre-Chorus]
+I don't need no loud and empty promises,
+Just the truth, something warm I can feel in this.
+Keep it real, keep it simple, no disguise,
+I just need to hear some words that won't hurt inside.
+
+[Chorus]
+I'm waiting on some good news,
+Kind and honest words, nothing to lose.
+Just a few short phrases, easy to hear,
+Everything's gonna be fine, the world's gonna reappear.
+
+I'm waiting on some good news,
+Like the rain after a drought, coming through.
+Let it come sooner, I can't take no more,
+Let life shine again, bright like before.
+
+[Verse 2]
+People speak in riddles I can't quite decode,
+Like they're hiding the very thing they wanna show.
+I can't read between the lines, guess what's unspoken,
+I need some answers, the kind I can trust, unbroken.
+
+[Pre-Chorus]
+I don't need no loud and empty promises,
+Just the truth, something warm I can feel in this.
+Keep it real, keep it simple, no disguise,
+I just need to hear some words that won't hurt inside.
+
+[Chorus]
+I'm waiting on some good news,
+Kind and honest words, nothing to lose.
+Just a few short phrases, easy to hear,
+Everything's gonna be fine, the world's gonna reappear.
+
+I'm waiting on some good news,
+Like the rain after a drought, coming through.
+Let it come sooner, I can't take no more,
+Let life shine again, bright like before.
+
+[Bridge]
+Don't need a headline, front-page and bold,
+Just a whisper in the night, softly told:
+«Hey, I've been thinking 'bout you, thinking 'bout you»
+That's the news that'll give me strength anew,
+And make my life happy, bright and true.
+
+[Chorus]
+I'm waiting on some good news,
+Kind and honest words, nothing to lose.
+Just a few short phrases, easy to hear,
+Everything's gonna be fine, the world's gonna reappear.
+
+I'm waiting on some good news,
+Like the rain after a drought, coming through.
+Let it come sooner, I can't take no more,
+Let life shine again, bright like before.`
+        }
+    ];
+
+    let currentIndex = 0;
+    let isPlaying = false;
+    let lyricLines = [];
+    const localBlobs = {};
+    const cachedCovers = {};
+
+    let audioCtx = null;
+    let sourceNode = null;
+    let bassFilter = null;
+    let midFilter = null;
+    let trebleFilter = null;
+    let gainNode = null;
+    let analyserNode = null;
+
+    const audio = document.getElementById('audioElement');
+    const playBtn = document.getElementById('playBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const seekBar = document.getElementById('seekBar');
+    const volumeBar = document.getElementById('volumeBar');
+    const bassBar = document.getElementById('bassBar');
+    const midBar = document.getElementById('midBar');
+    const trebleBar = document.getElementById('trebleBar');
+    const resetEqBtn = document.getElementById('resetEqBtn');
+    const currentTimeEl = document.getElementById('currentTime');
+    const totalTimeEl = document.getElementById('totalTime');
+    const currentTitle = document.getElementById('currentTitle');
+    const currentGenre = document.getElementById('currentGenre');
+    const lyricsBox = document.getElementById('lyricsBox');
+    const tracklistEl = document.getElementById('tracklist');
+    const badgeEl = document.getElementById('audioModeBadge');
+    const visualizer = document.getElementById('visualizer');
+    const coverArtContainer = document.getElementById('coverArtContainer');
+    const localFileInput = document.getElementById('localFileInput');
+
+    const defaultCoverHTML = `
+        <div class="cover-placeholder">
+            <span>💿</span>
+            Обложка трека
+        </div>
+    `;
+
+    // Создаем 26 столбиков для плавной волны
+    const bars = [];
+    for (let i = 0; i < 26; i++) {
+        const b = document.createElement('div');
+        b.className = 'bar';
+        visualizer.appendChild(b);
+        bars.push(b);
+    }
+
+    function initAudioContext() {
+        if (audioCtx) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+
+        sourceNode = audioCtx.createMediaElementSource(audio);
+
+        bassFilter = audioCtx.createBiquadFilter();
+        bassFilter.type = 'lowshelf';
+        bassFilter.frequency.setValueAtTime(250, audioCtx.currentTime);
+        bassFilter.gain.setValueAtTime(parseFloat(bassBar.value), audioCtx.currentTime);
+
+        midFilter = audioCtx.createBiquadFilter();
+        midFilter.type = 'peaking';
+        midFilter.frequency.setValueAtTime(1500, audioCtx.currentTime);
+        midFilter.Q.setValueAtTime(1.0, audioCtx.currentTime);
+        midFilter.gain.setValueAtTime(parseFloat(midBar.value), audioCtx.currentTime);
+
+        trebleFilter = audioCtx.createBiquadFilter();
+        trebleFilter.type = 'highshelf';
+        trebleFilter.frequency.setValueAtTime(4000, audioCtx.currentTime);
+        trebleFilter.gain.setValueAtTime(parseFloat(trebleBar.value), audioCtx.currentTime);
+
+        gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(volumeBar.value / 100, audioCtx.currentTime);
+
+        analyserNode = audioCtx.createAnalyser();
+        analyserNode.fftSize = 128;
+        analyserNode.smoothingTimeConstant = 0.8;
+
+        sourceNode.connect(bassFilter);
+        bassFilter.connect(midFilter);
+        midFilter.connect(trebleFilter);
+        trebleFilter.connect(gainNode);
+        gainNode.connect(analyserNode);
+        analyserNode.connect(audioCtx.destination);
+    }
+
+    function formatTime(sec) {
+        if (!sec || isNaN(sec)) return "00:00";
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function renderPlaylist() {
+        tracklistEl.innerHTML = '';
+        tracks.forEach((t, idx) => {
+            const item = document.createElement('div');
+            item.className = 'track-item' + (idx === currentIndex ? ' active' : '');
+            item.innerHTML = `
+                <div class="track-left">
+                    <div class="track-num">${idx === currentIndex && isPlaying ? '&#9654;' : '0' + (idx + 1)}</div>
+                    <div>
+                        <div class="track-name">${t.title}</div>
+                        <div class="track-meta">${t.genre}</div>
+                    </div>
+                </div>
+                <div class="track-bpm">${t.bpm} BPM</div>
+            `;
+            item.onclick = () => {
+                if (currentIndex === idx) {
+                    togglePlay();
+                } else {
+                    loadTrack(idx, true);
+                }
+            };
+            tracklistEl.appendChild(item);
+        });
+    }
+
+    function setupLyrics(rawText) {
+        lyricsBox.innerHTML = '';
+        lyricLines = [];
+        const lines = rawText.split('\n');
+        
+        lines.forEach(line => {
+            const div = document.createElement('div');
+            div.className = 'lyric-line';
+            if (line.trim().startsWith('[') && line.trim().endsWith(']')) {
+                div.classList.add('section-header');
+            }
+            div.textContent = line === '' ? '\u00A0' : line;
+            lyricsBox.appendChild(div);
+            lyricLines.push(div);
+        });
+    }
+
+    function extractCoverFromTag(tag, baseName) {
+        const picture = tag.tags && tag.tags.picture;
+        if (picture) {
+            let base64String = "";
+            for (let i = 0; i < picture.data.length; i++) {
+                base64String += String.fromCharCode(picture.data[i]);
+            }
+            const base64 = window.btoa(base64String);
+            const imgUrl = `data:${picture.format};base64,${base64}`;
+            cachedCovers[baseName] = imgUrl;
+            if (tracks[currentIndex].baseName === baseName) {
+                coverArtContainer.innerHTML = `<img src="${imgUrl}" alt="Обложка трека">`;
+            }
+        }
+    }
+
+    function updateCoverArt(track) {
+        if (cachedCovers[track.baseName]) {
+            coverArtContainer.innerHTML = `<img src="${cachedCovers[track.baseName]}" alt="Обложка трека">`;
+            return;
+        }
+        coverArtContainer.innerHTML = defaultCoverHTML;
+
+        if (window.jsmediatags && window.location.protocol !== 'file:') {
+            try {
+                const fullUrl = new URL(track.audioSrc, window.location.href).href;
+                window.jsmediatags.read(fullUrl, {
+                    onSuccess: function(tag) {
+                        extractCoverFromTag(tag, track.baseName);
+                    },
+                    onError: function() {}
+                });
+            } catch (e) {}
+        }
+    }
+
+    localFileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+            const lowerName = file.name.toLowerCase();
+            tracks.forEach(t => {
+                if (lowerName.includes(t.baseName)) {
+                    localBlobs[t.baseName] = URL.createObjectURL(file);
+                    if (window.jsmediatags) {
+                        window.jsmediatags.read(file, {
+                            onSuccess: function(tag) {
+                                extractCoverFromTag(tag, t.baseName);
+                            },
+                            onError: function() {}
+                        });
+                    }
+                }
+            });
+        });
+        loadTrack(currentIndex, isPlaying);
+    });
+
+    function loadTrack(index, autoPlay = false) {
+        currentIndex = index;
+        const t = tracks[currentIndex];
+
+        currentTitle.textContent = t.title;
+        currentGenre.textContent = t.genre;
+        
+        setupLyrics(t.lyrics);
+        updateCoverArt(t);
+
+        audio.src = localBlobs[t.baseName] || t.audioSrc;
+        audio.load();
+
+        seekBar.value = 0;
+        currentTimeEl.textContent = "00:00";
+        totalTimeEl.textContent = "--:--";
+
+        badgeEl.classList.remove('error');
+        badgeEl.textContent = "Готов к воспроизведению";
+
+        renderPlaylist();
+
+        if (autoPlay) {
+            playCurrent();
+        }
+    }
+
+    function playCurrent() {
+        initAudioContext();
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        isPlaying = true;
+        playBtn.innerHTML = '&#10074;&#10074;';
+        renderPlaylist();
+
+        audio.play().then(() => {
+            badgeEl.classList.remove('error');
+            badgeEl.textContent = "Играет: " + tracks[currentIndex].title;
+        }).catch((err) => {
+            isPlaying = false;
+            playBtn.innerHTML = '&#9654;';
+            badgeEl.classList.add('error');
+            badgeEl.textContent = "Нажмите Play или выберите MP3 файл";
+            renderPlaylist();
+        });
+    }
+
+    function pauseCurrent() {
+        isPlaying = false;
+        playBtn.innerHTML = '&#9654;';
+        audio.pause();
+        badgeEl.textContent = "На паузе";
+        renderPlaylist();
+    }
+
+    function togglePlay() {
+        if (isPlaying) {
+            pauseCurrent();
+        } else {
+            playCurrent();
+        }
+    }
+
+    audio.addEventListener('error', () => {
+        isPlaying = false;
+        playBtn.innerHTML = '&#9654;';
+        badgeEl.classList.add('error');
+        badgeEl.textContent = `Файл не найден в корне`;
+        renderPlaylist();
+    });
+
+    audio.addEventListener('loadedmetadata', () => {
+        totalTimeEl.textContent = formatTime(audio.duration);
+    });
+
+    audio.addEventListener('timeupdate', () => {
+        if (audio.duration) {
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+            seekBar.value = (audio.currentTime / audio.duration) * 100;
+        }
+    });
+
+    audio.addEventListener('ended', () => {
+        nextBtn.click();
+    });
+
+    seekBar.addEventListener('input', () => {
+        if (audio.duration) {
+            audio.currentTime = (seekBar.value / 100) * audio.duration;
+        }
+    });
+
+    volumeBar.addEventListener('input', () => {
+        const val = volumeBar.value / 100;
+        if (gainNode && audioCtx) {
+            gainNode.gain.setValueAtTime(val, audioCtx.currentTime);
+        } else {
+            audio.volume = val;
+        }
+    });
+
+    bassBar.addEventListener('input', () => {
+        if (bassFilter && audioCtx) {
+            bassFilter.gain.setValueAtTime(parseFloat(bassBar.value), audioCtx.currentTime);
+        }
+    });
+
+    midBar.addEventListener('input', () => {
+        if (midFilter && audioCtx) {
+            midFilter.gain.setValueAtTime(parseFloat(midBar.value), audioCtx.currentTime);
+        }
+    });
+
+    trebleBar.addEventListener('input', () => {
+        if (trebleFilter && audioCtx) {
+            trebleFilter.gain.setValueAtTime(parseFloat(trebleBar.value), audioCtx.currentTime);
+        }
+    });
+
+    resetEqBtn.onclick = () => {
+        bassBar.value = 0;
+        midBar.value = 0;
+        trebleBar.value = 0;
+        if (audioCtx) {
+            if (bassFilter) bassFilter.gain.setValueAtTime(0, audioCtx.currentTime);
+            if (midFilter) midFilter.gain.setValueAtTime(0, audioCtx.currentTime);
+            if (trebleFilter) trebleFilter.gain.setValueAtTime(0, audioCtx.currentTime);
+        }
+    };
+
+    const dataArray = new Uint8Array(28);
+
+    setInterval(() => {
+        if (isPlaying && !audio.paused && analyserNode) {
+            analyserNode.getByteFrequencyData(dataArray);
+
+            bars.forEach((b, idx) => {
+                const val = dataArray[idx + 1] || 0;
+                const h = Math.max(8, (val / 255) * 105);
+                b.style.height = Math.min(h, 100) + 'px';
+            });
+        } else {
+            bars.forEach(b => {
+                b.style.height = '8px';
+            });
+        }
+    }, 50);
+
+    playBtn.onclick = togglePlay;
+    prevBtn.onclick = () => {
+        const nextIdx = (currentIndex - 1 + tracks.length) % tracks.length;
+        loadTrack(nextIdx, isPlaying);
+    };
+    nextBtn.onclick = () => {
+        const nextIdx = (currentIndex + 1) % tracks.length;
+        loadTrack(nextIdx, isPlaying);
+    };
+
+    audio.volume = 0.85;
+    renderPlaylist();
+    loadTrack(0, false);
+</script>
+
+</body>
+</html>
